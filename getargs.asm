@@ -302,6 +302,7 @@ nextcl:	mov bx,setline+5	; target pointer
 	xor bp,bp		; "no = yet"
 skipcl:	mov al,[es:di]
 	inc di
+	xor ah,ah		; flag not in FD kernel config {} block 
 	or al,al
 	jz donecl
 	cmp al,' '
@@ -309,6 +310,19 @@ skipcl:	mov al,[es:di]
 
 copycl:	cmp al,' '		; suppress control chars
 	jb evil			; those are evil, skip them
+	or ah,ah		; skipping FD kernel config.sys lines { ... } ?
+	jnz checkfdend
+	cmp al,'{'		; skip FD kernel config.sys lines { ... }
+	jnz notfd
+	or ah, 1
+	jmp evil
+checkfdend:
+	cmp al,'}'
+	mov al,'}'		; ensure spaces aren't treated special
+	jnz evil
+	xor ah,ah
+	jmp evil
+notfd:
 	cmp al,'='
 	jnz nosign
 issign:	inc bp			; found a = sign, remember that
