@@ -308,10 +308,12 @@ skipcl:	mov al,[es:di]
 	cmp al,' '
 	jz skipcl		; skip leading spaces
 
-copycl:	cmp al,' '		; suppress control chars
-	jb evil			; those are evil, skip them
+copycl:	
 	or ah,ah		; skipping FD kernel config.sys lines { ... } ?
 	jnz checkfdend
+	cmp al,' '		; suppress control chars
+	jb evil			; those are evil, skip them
+	je donecl		; space found so print key=value
 	cmp al,'{'		; skip FD kernel config.sys lines { ... }
 	jnz notfd
 	or ah, 1
@@ -332,8 +334,7 @@ evil:	mov al,[es:di]		; check next source byte
 	inc di
 	or al,al
 	jz donecl
-	cmp al,' '
-	jnz copycl		; neither eof nor space? keep copying!
+	jmp copycl
 
 donecl:	cmp bx,setline+5
 	jz nocl
